@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="pt-BR">
+	<head>
+		<meta charset="UTF-8" />
+		<meta
+			name="viewport"
+			content="width=device-width, initial-scale=1.0"
+		/>
+		<title>Teste Índices Econômicos</title>
+		<script type="module" src="src/main.js"></script>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				max-width: 800px;
+				margin: 0 auto;
+				padding: 20px;
+			}
+			.indice {
+				margin-bottom: 15px;
+				padding: 10px;
+				background: #f5f5f5;
+				border-radius: 4px;
+			}
+			button {
+				padding: 8px 16px;
+				margin-right: 10px;
+				cursor: pointer;
+			}
+			.loading {
+				color: #666;
+				font-style: italic;
+			}
+		</style>
+	</head>
+	<body>
+		<h1>Teste Índices Econômicos</h1>
+
+		<div id="indices">
+			<p class="loading">Carregando índices...</p>
+		</div>
+
+		<div>
+			<button id="refresh">Atualizar Índices</button>
+			<button id="checkStorage">Verificar Storage</button>
+		</div>
+
+		<script>
+			document.addEventListener('DOMContentLoaded', async () => {
+				const indicesContainer = document.getElementById('indices');
+				const refreshBtn = document.getElementById('refresh');
+				const checkStorageBtn =
+					document.getElementById('checkStorage');
+
+				// Função para formatar os índices
+				function formatIndices(indices) {
+					if (!indices) return '<p>Nenhum dado disponível</p>';
+
+					return `
+          <div class="indice">
+            <h3>SELIC</h3>
+            <p>Atual: ${indices.selic.current}%</p>
+            ${indices.selic.last5YearsAvg ? `<p>Média 5 anos: ${indices.selic.last5YearsAvg}%</p>` : ''}
+          </div>
+          <div class="indice">
+            <h3>CDI</h3>
+            <p>Atual: ${indices.cdi.current}%</p>
+          </div>
+          <div class="indice">
+            <h3>IPCA</h3>
+            <p>Atual: ${indices.ipca.current}%</p>
+          </div>
+          <div class="indice">
+            <h3>INPC</h3>
+            <p>Atual: ${indices.inpc.current}%</p>
+          </div>
+          <div class="indice">
+            <h3>Câmbio (USD)</h3>
+            <p>Atual: R$ ${indices.exchange.current}</p>
+            ${indices.exchange.last5YearsAvg ? `<p>Média 5 anos: R$ ${indices.exchange.last5YearsAvg}</p>` : ''}
+          </div>
+          <p><em>Última atualização: ${new Date(indices.lastUpdated).toLocaleString()}</em></p>
+        `;
+				}
+
+				// Carrega e exibe os índices iniciais
+				async function loadIndices() {
+					const indices = await economicIndices.getIndices();
+					indicesContainer.innerHTML = formatIndices(indices);
+				}
+
+				// Atualiza os índices
+				refreshBtn.addEventListener('click', async () => {
+					indicesContainer.innerHTML =
+						'<p class="loading">Atualizando...</p>';
+					await economicIndices.updateIndices();
+					await loadIndices();
+				});
+
+				// Verifica o storage
+				checkStorageBtn.addEventListener('click', () => {
+					const stored = JSON.parse(
+						localStorage.getItem('economic_indices_data'),
+					);
+					console.log('Conteúdo do Storage:', stored);
+					alert('Verifique o console para ver o conteúdo do storage');
+				});
+
+				// Inicializa
+				await loadIndices();
+			});
+		</script>
+	</body>
+</html>
