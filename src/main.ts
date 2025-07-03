@@ -1,4 +1,4 @@
-import { economicIndices } from './lib';
+import { economicIndices } from './lib/EconomicIndicesClient';
 
 // 1. Declaração de tipo para o objeto window
 declare const window: Window &

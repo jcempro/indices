@@ -1,61 +1,72 @@
+import type { IndexValue } from './types';
 import {
-	fetchWithRetry,
 	EconomicIndicesLogger,
+	type FetchOptions,
+	fetchWithRetry,
 	parseNumber,
 } from './utils';
-import { IndexValue } from './types';
 
 const logger = EconomicIndicesLogger.getInstance();
 
-interface FetchIndexOptions {
+interface FetchIndexParams<T = any> {
 	url: string;
-	parser: (data: any) => number | IndexValue | null;
+	parser: (data: T) => number | IndexValue | null;
 	fallback?: IndexValue;
 	indexName: string;
-	isHistorical?: boolean;
-	historicalParser?: (data: any) => number[];
+	fetchOptions?: FetchOptions;
+	historicalConfig?: {
+		urlBuilder: (baseUrl: string) => string;
+		parser: (data: any) => number[];
+	};
 }
 
-export async function fetchIndex(
-	options: FetchIndexOptions,
+export async function fetchIndex<T = any>(
+	params: FetchIndexParams<T>,
 ): Promise<IndexValue> {
 	const {
 		url,
 		parser,
 		fallback,
 		indexName,
-		isHistorical,
-		historicalParser,
-	} = options;
+		fetchOptions = { retries: 3, retryDelay: 1000, timeout: 8000 },
+		historicalConfig,
+	} = params;
 
 	try {
-		logger.log(`Fetching ${indexName} data from ${url}`);
+		logger.log(`> '${indexName}'`, url);
 
-		// Dados atuais
+		// 1. Busca dados atuais (com tratamento correto do Response)
 		const currentData = await fetchWithRetry(
 			url,
-			(data) => {
+			async (response) => {
+				if (!response.ok) {
+					throw new Error(`HTTP error! status: ${response.status}`);
+				}
+
+				const data = await response.json();
 				const parsed = parser(data);
+
 				if (parsed === null || parsed === undefined) {
-					throw new Error(`No ${indexName} data available`);
+					throw new Error(`Invalid ${indexName} data structure`);
 				}
 				return parsed;
 			},
-			{ retries: 3 },
+			fetchOptions,
 		);
 
-		// Se for um índice com histórico, busca os dados históricos
+		// 2. Busca dados históricos (se configurado)
 		let historicalValues: number[] = [];
-		if (isHistorical && historicalParser) {
-			const historicalUrl =
-				url.replace('/ultimos/1', '') + '&dataInicial=5yearsago';
+		if (historicalConfig) {
 			try {
-				const historicalData = await fetchWithRetry(
+				const historicalUrl = historicalConfig.urlBuilder(url);
+				historicalValues = await fetchWithRetry(
 					historicalUrl,
-					historicalParser,
-					{ retries: 3 },
+					async (response) => {
+						const data = await response.json();
+						return historicalConfig.parser(data);
+					},
+					{ ...fetchOptions, timeout: 15000 }, // Timeout maior para históricos
 				);
-				historicalValues = historicalData;
 			} catch (error) {
 				logger.error(
 					`Failed to fetch historical ${indexName} data`,
@@ -64,43 +75,45 @@ export async function fetchIndex(
 			}
 		}
 
-		// Retorna o objeto IndexValue formatado
-		if (typeof currentData === 'number') {
-			return {
-				current: currentData,
-				last5YearsAvg:
-					historicalValues.length > 0 ?
-						getLast5YearsAvg(historicalValues)
-					:	undefined,
-				lastUpdated: new Date().toISOString(),
-			};
-		} else {
-			return {
-				...currentData,
-				last5YearsAvg:
-					historicalValues.length > 0 ?
-						getLast5YearsAvg(historicalValues)
-					:	currentData.last5YearsAvg,
-				lastUpdated: new Date().toISOString(),
-			};
-		}
+		// 3. Formata a resposta
+		return formatIndexValue(currentData, historicalValues);
 	} catch (error) {
-		logger.error(`Failed to fetch ${indexName} data`, error);
-
-		if (fallback) {
-			logger.log(`Using fallback ${indexName} data`);
-			return fallback;
-		}
-
-		return {
-			current: 0,
-			lastUpdated: new Date().toISOString(),
-		};
+		logger.error(`Failed to fetch ${indexName} data:`, error);
+		return fallback ?? createFallbackIndex();
 	}
 }
 
-function getLast5YearsAvg(values: number[]): number {
-	if (values.length === 0) return 0;
-	const sum = values.reduce((a, b) => a + b, 0);
-	return sum / values.length;
+// Helpers (mantidos exatamente como estão)
+function formatIndexValue(
+	data: number | IndexValue,
+	historicalValues: number[] = [],
+): IndexValue {
+	const baseValue =
+		typeof data === 'number' ? { current: data } : data;
+
+	const avg =
+		historicalValues.length > 0 ? calculateAverage(historicalValues)
+		: 'last5YearsAvg' in baseValue ? baseValue.last5YearsAvg
+		: undefined;
+
+	return {
+		...baseValue,
+		last5YearsAvg: avg,
+		lastUpdated: new Date().toISOString(),
+	};
+}
+
+function calculateAverage(values: number[]): number {
+	return parseFloat(
+		(
+			values.reduce((sum, value) => sum + value, 0) / values.length
+		).toFixed(2),
+	);
+}
+
+function createFallbackIndex(): IndexValue {
+	return {
+		current: 0,
+		lastUpdated: new Date().toISOString(),
+	};
 }

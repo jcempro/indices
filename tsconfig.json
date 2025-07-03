@@ -2,7 +2,7 @@
 	"compilerOptions": {
 		"target": "ES2020",
 		"module": "esnext",
-		"lib": ["es6", "webworker"],
+		"lib": ["ES2020", "webworker", "DOM"],
 		"strict": true,
 		"moduleResolution": "node",
 		"esModuleInterop": true,

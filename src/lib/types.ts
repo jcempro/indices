@@ -4,11 +4,23 @@ export interface IndexValue {
 	lastUpdated?: string;
 }
 
-export interface EconomicIndices {
-	selic: IndexValue;
-	cdi: IndexValue;
-	ipca: IndexValue;
-	inpc: IndexValue;
-	exchange: IndexValue;
-	lastUpdated: string;
-}
+export type EconomicIndices = Record<PropertyKey, IndexValue>;
+
+// Tipos para comunicação com o worker
+export type WorkerMessage =
+	| { type: 'indices'; indices: EconomicIndices | null }
+	| { type: 'error'; error: string };
+
+export type WorkerCommand = {
+	type: 'update';
+	payload: EconomicIndices | null;
+};
+
+export const IndicesName = [
+	'SELIC',
+	'CDI',
+	'IPCA',
+	'INPC',
+	'Câmbio',
+	'update',
+];

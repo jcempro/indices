@@ -8,9 +8,15 @@ import {
 	saveToStorage,
 	shouldUpdate,
 } from './storage';
-import type { EconomicIndices } from './types';
+import type {
+	EconomicIndices,
+	WorkerCommand,
+	WorkerMessage,
+} from './types';
 
-async function updateIndices(): Promise<EconomicIndices | null> {
+async function updateIndices(
+	p0: EconomicIndices | null,
+): Promise<EconomicIndices | null> {
 	const storedData = loadFromStorage();
 
 	if (!shouldUpdate(storedData)) {
@@ -18,25 +24,23 @@ async function updateIndices(): Promise<EconomicIndices | null> {
 	}
 
 	try {
-		const [selic, cdi, ipca, inpc, exchange] = await Promise.all([
-			fetchSelic(storedData?.data.selic),
-			fetchCDI(storedData?.data.cdi),
-			fetchIPCA(storedData?.data.ipca),
-			fetchINPC(storedData?.data.inpc),
-			fetchExchange(storedData?.data.exchange),
-		]);
+		const [selic, cdi, ipca, inpc /*, exchange*/] = await Promise.all(
+			[
+				fetchSelic(storedData?.data.selic),
+				fetchCDI(storedData?.data.cdi),
+				fetchIPCA(storedData?.data.ipca),
+				fetchINPC(storedData?.data.inpc),
+				/*fetchExchange(storedData?.data.exchange),*/
+			],
+		);
 
-		const newIndices: EconomicIndices = {
+		return {
 			selic,
 			cdi,
 			ipca,
 			inpc,
-			exchange,
-			lastUpdated: new Date().toISOString(),
+			/*exchange,*/
 		};
-
-		saveToStorage(newIndices);
-		return newIndices;
 	} catch (error) {
 		console.error('Failed to update indices:', error);
 		return storedData?.data || null;
@@ -49,13 +53,24 @@ interface WorkerGlobalScope {
 	postMessage: (message: any) => void;
 }
 
-const workerScope = self as unknown as WorkerGlobalScope;
+declare const self: WorkerGlobalScope;
 
-workerScope.onmessage = async (event: MessageEvent) => {
-	if (event.data === 'update') {
-		const indices = await updateIndices();
-		if (indices) {
-			workerScope.postMessage({ type: 'indices', indices });
+self.onmessage = async (event: MessageEvent<WorkerCommand>) => {
+	if (event.data.type === 'update') {
+		try {
+			const indices = await updateIndices(event.data.payload);
+			const response: WorkerMessage = {
+				type: 'indices',
+				indices,
+			};
+			self.postMessage(response);
+		} catch (error) {
+			const response: WorkerMessage = {
+				type: 'error',
+				error:
+					error instanceof Error ? error.message : 'Unknown error',
+			};
+			self.postMessage(response);
 		}
 	}
 };

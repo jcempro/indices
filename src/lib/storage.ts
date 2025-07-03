@@ -7,10 +7,17 @@ export interface StoredIndices {
 	lastUpdated: string;
 }
 
+// Declaração de tipo para o localStorage
+declare const localStorage: Storage;
+
 export function loadFromStorage(): StoredIndices | null {
 	try {
-		const stored = localStorage.getItem(STORAGE_KEY);
-		return stored ? JSON.parse(stored) : null;
+		// Verifica se está no navegador
+		if (typeof window !== 'undefined' && window.localStorage) {
+			const stored = localStorage.getItem(STORAGE_KEY);
+			return stored ? JSON.parse(stored) : null;
+		}
+		return null;
 	} catch (error) {
 		console.error('Failed to load from storage:', error);
 		return null;
@@ -19,11 +26,14 @@ export function loadFromStorage(): StoredIndices | null {
 
 export function saveToStorage(data: EconomicIndices): void {
 	try {
-		const storedData: StoredIndices = {
-			data,
-			lastUpdated: new Date().toISOString(),
-		};
-		localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
+		// Verifica se está no navegador
+		if (typeof window !== 'undefined' && window.localStorage) {
+			const storedData: StoredIndices = {
+				data,
+				lastUpdated: new Date().toISOString(),
+			};
+			localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
+		}
 	} catch (error) {
 		console.error('Failed to save to storage:', error);
 	}
@@ -37,7 +47,6 @@ export function shouldUpdate(
 	const lastUpdated = new Date(storedData.lastUpdated);
 	const today = new Date();
 
-	// Verifica se a última atualização foi em um dia útil anterior
 	return (
 		lastUpdated.getDate() !== today.getDate() ||
 		lastUpdated.getMonth() !== today.getMonth() ||

@@ -1,16 +1,42 @@
 import { IndexValue } from './types';
 
-interface FetchOptions {
+export interface FetchOptions {
 	retries?: number;
 	retryDelay?: number;
 	timeout?: number;
 }
 
+const responseCache = new Map<
+	string,
+	{ data: any; timestamp: number }
+>();
+const CACHE_TTL = 30 * 60 * 1000; // 5 minutos em milissegundos
+
 export const DEFAULT_FETCH_OPTIONS: FetchOptions = {
-	retries: 3,
-	retryDelay: 1000,
-	timeout: 5000,
+	retries: 7,
+	retryDelay: 1500,
+	timeout: 1000,
 };
+
+// src/lib/utils/dateUtils.ts
+export function getValidBCBDate(yearsAgo: number): string {
+	const date = new Date();
+	date.setFullYear(date.getFullYear() - yearsAgo);
+
+	// Formato exigido pela API: DD/MM/YYYY
+	const day = String(date.getDate()).padStart(2, '0');
+	const month = String(date.getMonth() + 1).padStart(2, '0');
+	const year = date.getFullYear();
+
+	return `${day}/${month}/${year}`;
+}
+
+// src/lib/utils/dateUtils.ts (novo arquivo)
+export function getFiveYearsAgoDate(): string {
+	const date = new Date();
+	date.setFullYear(date.getFullYear() - 5);
+	return date.toISOString().split('T')[0]; // Formato YYYY-MM-DD
+}
 
 export function ensureIndexValue(
 	value: number | IndexValue | null | undefined,
@@ -52,11 +78,7 @@ export class EconomicIndicesLogger {
 
 	public log(message: string, data?: any): void {
 		if (this.enabled) {
-			const timestamp = new Date().toISOString();
-			console.log(
-				`[${timestamp}] [EconomicIndices] ${message}`,
-				data || '',
-			);
+			console.log(`[EconomicIndices] ${message}`, data || '');
 		}
 	}
 
@@ -64,7 +86,7 @@ export class EconomicIndicesLogger {
 		if (this.enabled) {
 			const timestamp = new Date().toISOString();
 			console.error(
-				`[${timestamp}] [EconomicIndices] ERROR: ${message}`,
+				`[EconomicIndices] ERROR: ${message}`,
 				error || '',
 			);
 		}
@@ -81,53 +103,93 @@ export class EconomicIndicesLogger {
 
 export async function fetchWithRetry<T>(
 	url: string,
-	parser: (response: any) => T,
-	options: FetchOptions = DEFAULT_FETCH_OPTIONS,
+	responseHandler: (response: Response) => Promise<T>,
+	options: FetchOptions = {
+		retries: 3,
+		retryDelay: 1000,
+		timeout: 8000,
+	},
 ): Promise<T> {
-	const logger = EconomicIndicesLogger.getInstance();
-	const { retries = 3, retryDelay = 1000, timeout = 5000 } = options;
+	// Verifica se há cache válido
+	const cached = responseCache.get(url);
+	if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+		console.log(`[Cache hit] ${url}`);
+		return cached.data;
+	}
 
-	for (let attempt = 1; attempt <= retries; attempt++) {
+	let lastError: Error | undefined;
+
+	for (let attempt = 1; attempt <= options.retries!; attempt++) {
 		try {
-			logger.log(`Fetching ${url} (attempt ${attempt}/${retries})`);
-
 			const controller = new AbortController();
-			const timeoutId = setTimeout(() => controller.abort(), timeout);
+			const timeoutId = setTimeout(
+				() => controller.abort(),
+				options.timeout,
+			);
 
 			const response = await fetch(url, {
 				signal: controller.signal,
 			});
+
 			clearTimeout(timeoutId);
 
 			if (!response.ok) {
 				throw new Error(`HTTP error! status: ${response.status}`);
 			}
 
-			const data = await response.json();
-			return parser(data);
-		} catch (error) {
-			if (attempt === retries) {
-				logger.error(
-					`Failed to fetch ${url} after ${retries} attempts`,
-					error,
-				);
-				throw error;
-			}
+			const data = await responseHandler(response);
 
-			logger.log(`Retrying ${url} in ${retryDelay}ms...`);
-			await new Promise((resolve) => setTimeout(resolve, retryDelay));
+			// Armazena no cache antes de retornar
+			responseCache.set(url, {
+				data,
+				timestamp: Date.now(),
+			});
+
+			return data;
+		} catch (error) {
+			lastError = error as Error;
+			if (attempt < options.retries!) {
+				await new Promise((resolve) =>
+					setTimeout(resolve, options.retryDelay),
+				);
+			}
 		}
 	}
 
-	throw new Error('Unexpected error in fetchWithRetry');
+	throw (
+		lastError || new Error(`Failed after ${options.retries} retries`)
+	);
 }
 
-export function parseNumber(text: string): number {
-	return parseFloat(text.replace(/\./g, '').replace(',', '.'));
+/**
+ * Converte taxa diária para equivalente anual (252 dias úteis)
+ */
+export function diarioUtilToAnual(dailyRate: number): number {
+	return parseNumber(
+		(Math.pow(1 + dailyRate / 100, 252) - 1) * 100 + '',
+	);
 }
 
-export function getLast5YearsAvg(values: number[]): number {
-	if (values.length === 0) return 0;
-	const sum = values.reduce((a, b) => a + b, 0);
-	return sum / values.length;
+/**
+ * Converte taxa mensal para equivalente anual
+ */
+export function mensalToAnual(monthlyRate: number): number {
+	return parseFloat(
+		(Math.pow(1 + monthlyRate / 100, 12) - 1).toFixed(2),
+	);
+}
+
+export function parseNumber(text: string | number): number {
+	return parseFloat(
+		parseFloat(`${text}`.replace(',', '.')).toFixed(2),
+	);
+}
+
+/**
+ * Formata data para o padrão IBGE (YYYYMM)
+ */
+export function getValidIBGEDate(yearsAgo: number): string {
+	const date = new Date();
+	date.setFullYear(date.getFullYear() - yearsAgo);
+	return `${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}`;
 }

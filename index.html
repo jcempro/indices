@@ -35,13 +35,13 @@
 	<body>
 		<h1>Teste Índices Econômicos</h1>
 
-		<div id="indices">
-			<p class="loading">Carregando índices...</p>
-		</div>
-
 		<div>
 			<button id="refresh">Atualizar Índices</button>
 			<button id="checkStorage">Verificar Storage</button>
+		</div>
+
+		<div id="indices">
+			<p class="loading">Carregando índices...</p>
 		</div>
 
 		<script>
@@ -53,33 +53,34 @@
 
 				// Função para formatar os índices
 				function formatIndices(indices) {
+					console.log(indices);
 					if (!indices) return '<p>Nenhum dado disponível</p>';
 
 					return `
-          <div class="indice">
-            <h3>SELIC</h3>
-            <p>Atual: ${indices.selic.current}%</p>
-            ${indices.selic.last5YearsAvg ? `<p>Média 5 anos: ${indices.selic.last5YearsAvg}%</p>` : ''}
-          </div>
-          <div class="indice">
-            <h3>CDI</h3>
-            <p>Atual: ${indices.cdi.current}%</p>
-          </div>
-          <div class="indice">
-            <h3>IPCA</h3>
-            <p>Atual: ${indices.ipca.current}%</p>
-          </div>
-          <div class="indice">
-            <h3>INPC</h3>
-            <p>Atual: ${indices.inpc.current}%</p>
-          </div>
-          <div class="indice">
-            <h3>Câmbio (USD)</h3>
-            <p>Atual: R$ ${indices.exchange.current}</p>
-            ${indices.exchange.last5YearsAvg ? `<p>Média 5 anos: R$ ${indices.exchange.last5YearsAvg}</p>` : ''}
-          </div>
-          <p><em>Última atualização: ${new Date(indices.lastUpdated).toLocaleString()}</em></p>
-        `;
+			       <div class="indice">
+			         <h3>SELIC</h3>
+			         <p>Atual: ${indices.selic?.current}%</p>
+			         ${indices.selic.last5YearsAvg ? `<p>Média 5 anos: ${indices.selic.last5YearsAvg}%</p>` : ''}
+			       </div>
+			       <div class="indice">
+			         <h3>CDI</h3>
+			         <p>Atual: ${indices.cdi?.current}%</p>
+			       </div>
+			       <div class="indice">
+			         <h3>IPCA</h3>
+			         <p>Atual: ${indices.ipca?.current}%</p>
+			       </div>
+			       <div class="indice">
+			         <h3>INPC</h3>
+			         <p>Atual: ${indices.inpc?.current}%</p>
+			       </div>
+			       <div class="indice">
+			         <h3>Câmbio (USD)</h3>
+			         <p>Atual: R$ ${indices.exchange?.current}</p>
+			         ${indices.exchange?.last5YearsAvg ? `<p>Média 5 anos: R$ ${indices.exchange.last5YearsAvg}</p>` : ''}
+			       </div>
+			       <p><em>Última atualização: ${'lastUpdated' in indices ? new Date(indices.lastUpdated ?? '').toLocaleString() : ''}</em></p>
+			     `;
 				}
 
 				// Carrega e exibe os índices iniciais
