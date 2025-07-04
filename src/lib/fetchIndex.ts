@@ -1,10 +1,9 @@
-import type { IndexValue } from './types';
+import { IndexValue } from './types.js';
 import {
 	EconomicIndicesLogger,
-	type FetchOptions,
+	FetchOptions,
 	fetchWithRetry,
-	parseNumber,
-} from './utils';
+} from './utils.js';
 
 const logger = EconomicIndicesLogger.getInstance();
 
@@ -93,13 +92,13 @@ function formatIndexValue(
 
 	const avg =
 		historicalValues.length > 0 ? calculateAverage(historicalValues)
-		: 'last5YearsAvg' in baseValue ? baseValue.last5YearsAvg
+		: 'avg' in baseValue ? baseValue.avg
 		: undefined;
 
 	return {
 		...baseValue,
-		last5YearsAvg: avg,
-		lastUpdated: new Date().toISOString(),
+		avg: avg,
+		updated: new Date(),
 	};
 }
 
@@ -114,6 +113,6 @@ function calculateAverage(values: number[]): number {
 function createFallbackIndex(): IndexValue {
 	return {
 		current: 0,
-		lastUpdated: new Date().toISOString(),
+		updated: new Date(),
 	};
 }

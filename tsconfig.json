@@ -1,16 +1,16 @@
 {
 	"compilerOptions": {
 		"target": "ES2020",
-		"module": "esnext",
+		"module": "NodeNext",
 		"lib": ["ES2020", "webworker", "DOM"],
 		"strict": true,
-		"moduleResolution": "node",
+		"moduleResolution": "NodeNext",
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
 		"outDir": "./dist",
 		"rootDir": "./src",
-		"types": ["vite/client"]
+		"types": ["node", "vite/client"]
 	},
 	"include": ["src/**/*"],
 	"exclude": ["node_modules"]

@@ -1,10 +1,6 @@
-import { fetchIndex } from '../lib/fetchIndex';
-import type { IndexValue } from '../lib/types';
-import {
-	getFiveYearsAgoDate,
-	getValidBCBDate,
-	parseNumber,
-} from '../lib/utils';
+import { fetchIndex } from '../lib/fetchIndex.js';
+import { IndexValue } from '../lib/types.js';
+import { getValidBCBDate, parseNumber } from '../lib/utils.js';
 
 export async function fetchSelic(
 	fallback?: IndexValue,

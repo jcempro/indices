@@ -1,6 +1,6 @@
-import { fetchIndex } from '../lib/fetchIndex';
-import type { IndexValue } from '../lib/types';
-import { parseNumber, getValidIBGEDate } from '../lib/utils';
+import { fetchIndex } from '../lib/fetchIndex.js';
+import { IndexValue } from '../lib/types.js';
+import { getValidIBGEDate, parseNumber } from '../lib/utils.js';
 
 /**
  * Calcula a variação percentual entre dois números-índice

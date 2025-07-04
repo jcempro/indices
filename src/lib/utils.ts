@@ -1,4 +1,4 @@
-import { IndexValue } from './types';
+import { IndexValue } from './types.js';
 
 export interface FetchOptions {
 	retries?: number;
@@ -55,8 +55,8 @@ export function ensureIndexValue(
 	if (typeof value === 'number') {
 		return {
 			current: value,
-			last5YearsAvg: fallback.last5YearsAvg, // Mantém o histórico se existir
-			lastUpdated: fallback.lastUpdated, // Mantém a data se existir
+			avg: fallback.avg, // Mantém o histórico se existir
+			updated: fallback.updated, // Mantém a data se existir
 		};
 	}
 

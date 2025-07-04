@@ -1,6 +1,6 @@
-import { fetchIndex } from '../lib/fetchIndex';
-import type { IndexValue } from '../lib/types';
-import { parseNumber, getValidIBGEDate } from '../lib/utils';
+import { fetchIndex } from '../lib/fetchIndex.js';
+import { IndexValue } from '../lib/types.js';
+import { getValidIBGEDate, parseNumber } from '../lib/utils.js';
 
 /**
  * Calcula a variação percentual acumulada a partir de uma série de variações mensais
@@ -27,7 +27,7 @@ export async function fetchINPC(
 	return fetchIndex({
 		// URL para obter os últimos 12 meses do INPC
 		url: `https://apisidra.ibge.gov.br/values/t/1737/n1/all/v/63/p/${fiveYearsAgo}-${oneYearAgo}?formato=json`,
-		parser: (data) => {
+		parser: (data: any) => {
 			// A API Sidra retorna um array de objetos (primeiro item é cabeçalho)
 			if (!Array.isArray(data) || data.length < 13) return null;
 

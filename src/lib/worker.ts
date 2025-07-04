@@ -1,79 +1,82 @@
-import { fetchCDI } from '../indices/cdi';
-import { fetchExchange } from '../indices/exchange';
-import { fetchINPC } from '../indices/inpc';
-import { fetchIPCA } from '../indices/ipca';
-import { fetchSelic } from '../indices/selic';
+import { fetchCDI } from '../indices/cdi.js';
+import { fetchINPC } from '../indices/inpc.js';
+import { fetchIPCA } from '../indices/ipca.js';
+import { fetchSelic } from '../indices/selic.js';
 import {
 	loadFromStorage,
-	saveToStorage,
 	shouldUpdate,
-} from './storage';
-import type {
-	EconomicIndices,
+	saveToStorage,
+} from './storage.js';
+import {
 	WorkerCommand,
 	WorkerMessage,
-} from './types';
+	EconomicIndices,
+} from './types.js';
 
-async function updateIndices(
-	p0: EconomicIndices | null,
-): Promise<EconomicIndices | null> {
-	const storedData = loadFromStorage();
-
-	if (!shouldUpdate(storedData)) {
-		return null;
-	}
-
-	try {
-		const [selic, cdi, ipca, inpc /*, exchange*/] = await Promise.all(
-			[
-				fetchSelic(storedData?.data.selic),
-				fetchCDI(storedData?.data.cdi),
-				fetchIPCA(storedData?.data.ipca),
-				fetchINPC(storedData?.data.inpc),
-				/*fetchExchange(storedData?.data.exchange),*/
-			],
-		);
-
-		return {
-			selic,
-			cdi,
-			ipca,
-			inpc,
-			/*exchange,*/
-		};
-	} catch (error) {
-		console.error('Failed to update indices:', error);
-		return storedData?.data || null;
-	}
-}
-
-// Tipagem estendida para Worker em módulos ES
+// Definindo a tipagem completa para o contexto do Worker
 interface WorkerGlobalScope {
-	onmessage: ((this: Worker, ev: MessageEvent) => any) | null;
-	postMessage: (message: any) => void;
+	onmessage:
+		| ((this: Worker, ev: MessageEvent<WorkerCommand>) => any)
+		| null;
+	postMessage: (message: WorkerMessage) => void;
+	importScripts?: (...urls: string[]) => void;
 }
 
 declare const self: WorkerGlobalScope;
+
+async function updateIndices(
+	previousData: EconomicIndices | null,
+): Promise<EconomicIndices | null> {
+	const stored = await loadFromStorage();
+	if (stored && !shouldUpdate(stored)) return null;
+
+	try {
+		const [selic, cdi, ipca, inpc] = await Promise.all([
+			fetchSelic(previousData?.selic),
+			fetchCDI(previousData?.cdi),
+			fetchIPCA(previousData?.ipca),
+			fetchINPC(previousData?.inpc),
+		]);
+
+		const indices = { selic, cdi, ipca, inpc };
+		await saveToStorage(indices);
+		return indices;
+	} catch (error) {
+		console.error('Worker failed to update indices:', error);
+		return null;
+	}
+}
 
 self.onmessage = async (event: MessageEvent<WorkerCommand>) => {
 	if (event.data.type === 'update') {
 		try {
 			const indices = await updateIndices(event.data.payload);
-			const response: WorkerMessage = {
+			self.postMessage({
 				type: 'indices',
 				indices,
-			};
-			self.postMessage(response);
+			});
 		} catch (error) {
-			const response: WorkerMessage = {
+			self.postMessage({
 				type: 'error',
 				error:
 					error instanceof Error ? error.message : 'Unknown error',
-			};
-			self.postMessage(response);
+			});
 		}
 	}
 };
 
-// Exportação vazia para módulo TypeScript
+// Auto-inicialização
+(async () => {
+	const stored = await loadFromStorage();
+	if (!stored || shouldUpdate(stored)) {
+		const indices = await updateIndices(stored?.indices || null);
+		if (indices) {
+			self.postMessage({
+				type: 'indices',
+				indices,
+			});
+		}
+	}
+})();
+
 export default null as any;

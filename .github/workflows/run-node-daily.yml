@@ -1,48 +1,35 @@
-name: Executar Script Diário (TypeScript)
+name: Update Indices Daily
 
 on:
   schedule:
-    - cron: '0 9 * * *' # 06:00 AM Horário de Brasília (UTC-3)
-  workflow_dispatch: # Permite execução manual
+    - cron: '0 9 * * *' # 06:00 AM (Brasília)
+  workflow_dispatch:
 
 jobs:
-  build-and-run:
+  update:
     runs-on: ubuntu-latest
     steps:
-      # 1. Checkout do repositório
       - name: Checkout
         uses: actions/checkout@v4
 
-      # 2. Configurar Node.js
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
-      # 3. Cache de dependências (opcional, mas recomendado)
-      - name: Cache node_modules
-        uses: actions/cache@v3
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('package-lock.json') }}
+      - name: Install Dependencies
+        run: npm install
 
-      # 4. Instalar dependências e TypeScript
-      - name: Instalar dependências
-        run: npm install typescript --save-dev && npm install
-
-      # 5. Compilar TypeScript (run.ts -> ./dist/run.js)
-      - name: Compilar TypeScript
+      - name: Compile TypeScript
         run: npx tsc
 
-      # 6. Executar o script (./dist/run.js)
-      - name: Rodar script
+      - name: Run Script
         run: node ./dist/run.js
 
-      # 7. Comitar a saída (indices.json) no repositório
-      - name: Atualizar repositório com indices.json
+      - name: Commit Changes
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git add ./indices.json
-          git commit -m "Atualiza indices.json via GitHub Actions [$(date)]" || echo "Nenhuma mudança para comitar."
+          git add indices.json
+          git commit -m "Update indices.json [$(date)]" || echo "No changes"
           git push

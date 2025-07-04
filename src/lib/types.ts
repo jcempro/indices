@@ -1,7 +1,9 @@
+import { economicIndices } from './EconomicIndicesClient.js';
+
 export interface IndexValue {
 	current: number;
-	last5YearsAvg?: number;
-	lastUpdated?: string;
+	avg?: number;
+	updated: Date;
 }
 
 export type EconomicIndices = Record<PropertyKey, IndexValue>;
@@ -24,3 +26,8 @@ export const IndicesName = [
 	'Câmbio',
 	'update',
 ];
+
+export interface StoredIndices {
+	indices: EconomicIndices;
+	updated: string;
+}

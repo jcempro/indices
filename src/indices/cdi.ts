@@ -1,17 +1,17 @@
-import { fetchIndex } from '../lib/fetchIndex';
-import type { IndexValue } from '../lib/types';
+import { fetchIndex } from '../lib/fetchIndex.js';
+import { IndexValue } from '../lib/types.js';
 import {
 	parseNumber,
-	getValidBCBDate,
 	diarioUtilToAnual,
-} from '../lib/utils';
+	getValidBCBDate,
+} from '../lib/utils.js';
 
 export async function fetchCDI(
 	fallback?: IndexValue,
 ): Promise<IndexValue> {
 	return fetchIndex({
 		url: 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/1?formato=json',
-		parser: (data) => {
+		parser: (data: any) => {
 			if (!Array.isArray(data) || data.length === 0) return null;
 
 			const dailyValue = parseNumber(data[0].valor);
@@ -29,11 +29,11 @@ export async function fetchCDI(
 			:	undefined,
 		indexName: 'CDI',
 		historicalConfig: {
-			urlBuilder: (baseUrl) =>
+			urlBuilder: (baseUrl: string) =>
 				baseUrl.replace('/ultimos/1', '') +
 				'&dataInicial=' +
 				getValidBCBDate(5),
-			parser: (data) => {
+			parser: (data: any) => {
 				if (!Array.isArray(data)) return [];
 				return data.map((item) => {
 					const dailyValue = parseNumber(item.valor);

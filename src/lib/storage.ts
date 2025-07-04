@@ -1,21 +1,56 @@
-import { EconomicIndices } from './types';
+import { EconomicIndices, StoredIndices } from './types.js';
 
 const STORAGE_KEY = 'economic_indices_data';
 
-export interface StoredIndices {
-	data: EconomicIndices;
-	lastUpdated: string;
+// Helper para detectar ambiente Node.js
+function isNodeEnvironment(): boolean {
+	return (
+		typeof process !== 'undefined' &&
+		process.versions?.node !== undefined
+	);
 }
 
-// Declaração de tipo para o localStorage
-declare const localStorage: Storage;
+// Helper para carregar módulos do Node.js dinamicamente
+async function loadNodeModules() {
+	const { default: fs } = await import('fs/promises');
+	const { default: path } = await import('path');
+	return { fs, path };
+}
 
-export function loadFromStorage(): StoredIndices | null {
+function getLatestUpdatedDate(data: EconomicIndices): Date {
+	let latestDate = new Date(0);
+	Object.values(data).forEach((index) => {
+		if (
+			index?.updated instanceof Date &&
+			index.updated > latestDate
+		) {
+			latestDate = index.updated;
+		}
+	});
+	return latestDate;
+}
+
+export async function loadFromStorage(): Promise<StoredIndices | null> {
 	try {
-		// Verifica se está no navegador
+		// Navegador
 		if (typeof window !== 'undefined' && window.localStorage) {
 			const stored = localStorage.getItem(STORAGE_KEY);
 			return stored ? JSON.parse(stored) : null;
+		}
+		// Node.js
+		else if (isNodeEnvironment()) {
+			const { fs, path } = await loadNodeModules();
+			const filePath = path.join(process.cwd(), 'indices.json');
+
+			try {
+				const rawData = await fs.readFile(filePath, 'utf-8');
+				return JSON.parse(rawData);
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+					return null; // Arquivo não existe
+				}
+				throw error;
+			}
 		}
 		return null;
 	} catch (error) {
@@ -24,27 +59,41 @@ export function loadFromStorage(): StoredIndices | null {
 	}
 }
 
-export function saveToStorage(data: EconomicIndices): void {
+export async function saveToStorage(
+	data: EconomicIndices,
+): Promise<void> {
 	try {
-		// Verifica se está no navegador
+		const latestUpdated = getLatestUpdatedDate(data);
+		const storedData: StoredIndices = {
+			indices: data,
+			updated: latestUpdated.toISOString(),
+		};
+
+		// Navegador
 		if (typeof window !== 'undefined' && window.localStorage) {
-			const storedData: StoredIndices = {
-				data,
-				lastUpdated: new Date().toISOString(),
-			};
 			localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
+		}
+		// Node.js
+		else if (isNodeEnvironment()) {
+			const { fs, path } = await loadNodeModules();
+			const filePath = path.join(process.cwd(), 'indices.json');
+			await fs.writeFile(
+				filePath,
+				JSON.stringify(storedData, null, 2),
+			);
 		}
 	} catch (error) {
 		console.error('Failed to save to storage:', error);
 	}
 }
 
+// shouldUpdate pode permanecer síncrono
 export function shouldUpdate(
 	storedData: StoredIndices | null,
 ): boolean {
 	if (!storedData) return true;
 
-	const lastUpdated = new Date(storedData.lastUpdated);
+	const lastUpdated = new Date(storedData.updated);
 	const today = new Date();
 
 	return (
