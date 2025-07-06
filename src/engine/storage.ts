@@ -59,7 +59,7 @@ export async function loadFromStorage(): Promise<StoredIndices | null> {
 	}
 }
 
-export async function _saveToStorage(
+export async function saveToStorage(
 	data: EconomicIndices,
 ): Promise<void> {
 	try {

@@ -2,7 +2,7 @@ import { SOURCES } from '../config.js';
 import {
 	deveriaAtualizar,
 	loadFromStorage,
-	_saveToStorage,
+	saveToStorage,
 } from './storage.js';
 import {
 	EconomicIndices,
@@ -23,16 +23,16 @@ class EconomicIndicesClient {
 		this.isNode =
 			typeof process !== 'undefined' &&
 			process.versions?.node !== undefined;
-		this._initialize().catch(console.error);
+		this.initialize().catch(console.error);
 	}
 
-	private async _initialize(): Promise<void> {
+	private async initialize(): Promise<void> {
 		if (!this.isNode) {
-			await this._initWebWorker();
+			await this.initWebWorker();
 		}
 	}
 
-	private async _initWebWorker(): Promise<void> {
+	private async initWebWorker(): Promise<void> {
 		if (typeof Worker === 'undefined') return;
 
 		try {
@@ -45,7 +45,7 @@ class EconomicIndicesClient {
 				event: MessageEvent<WorkerMessage>,
 			) => {
 				if (event.data.type === 'indices') {
-					this._handleNewIndices(event.data.indices);
+					this.handleNewIndices(event.data.indices);
 				}
 			};
 
@@ -58,10 +58,10 @@ class EconomicIndicesClient {
 		}
 	}
 
-	private _handleNewIndices(indices: EconomicIndices | null): void {
+	private handleNewIndices(indices: EconomicIndices | null): void {
 		this.currentIndices = indices;
 		if (indices) {
-			_saveToStorage(indices).catch(console.error);
+			saveToStorage(indices).catch(console.error);
 		}
 		this.resolvePendingPromises(indices);
 	}
@@ -91,9 +91,9 @@ class EconomicIndicesClient {
 
 	private async fetchIndicesNode(): Promise<EconomicIndices | null> {
 		try {
-			const indices = await this.fetchAllIndices(this.currentIndices);
+			const indices = await this.fetchAll(this.currentIndices);
 			if (indices) {
-				await _saveToStorage(indices);
+				await saveToStorage(indices);
 				this.currentIndices = indices;
 			}
 			return indices;
@@ -114,7 +114,7 @@ class EconomicIndicesClient {
 		});
 	}
 
-	private async fetchAllIndices(
+	private async fetchAll(
 		previousData: EconomicIndices | null,
 	): Promise<EconomicIndices> {
 		const indices = {} as EconomicIndices;

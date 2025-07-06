@@ -1,0 +1,4 @@
+/dist/*
+/build/*
+*.min.js
+run.js  # Seu arquivo de saída

@@ -4,6 +4,7 @@ import { readFileSync } from 'fs';
 import { transform } from 'esbuild';
 import { viteSingleFile } from 'vite-plugin-singlefile';
 import { visualizer } from 'rollup-plugin-visualizer';
+import esbuildManglePlugin from './scripts/vite-esbuild-mangle';
 
 function inlineWorkerPlugin() {
 	return {
@@ -21,7 +22,8 @@ function inlineWorkerPlugin() {
 					loader: 'ts',
 					minify: true,
 					treeShaking: true,
-					mangleProps: /^.*$/, // Renomeia tudo
+					mangleProps: /^.*$/,
+					minifyIdentifiers: true, // Adicionado para otimizar globais
 					sourcemap: false,
 					keepNames: false,
 				});
@@ -36,7 +38,8 @@ export default defineConfig({
 	plugins: [
 		inlineWorkerPlugin(),
 		viteSingleFile(),
-		visualizer({ open: true }),
+		esbuildManglePlugin(),
+		visualizer({ open: false }),
 	],
 	define: {
 		'process.env': '{}',
@@ -45,7 +48,7 @@ export default defineConfig({
 	build: {
 		outDir: 'dist',
 		target: 'es2020',
-		minify: 'esbuild',
+		minify: `esbuild`,
 		sourcemap: false,
 		lib: {
 			entry: resolve(__dirname, 'src/run.ts'),
@@ -66,6 +69,27 @@ export default defineConfig({
 				inlineDynamicImports: true,
 				compact: true,
 				manualChunks: undefined,
+			},
+		},
+	},
+	esbuild: {
+		minifyIdentifiers: true,
+		minifySyntax: true,
+		minifyWhitespace: true,
+		legalComments: 'none',
+		target: 'es2020',
+	},
+	optimizeDeps: {
+		esbuildOptions: {
+			minifyIdentifiers: true,
+			minifySyntax: true,
+			minifyWhitespace: true,
+			// Configuração alternativa para minificar classes
+			// Isso substitui a propriedade keepClassNames
+			supported: {
+				'class-field': true,
+				'class-private-field': true,
+				'class-static-field': true,
 			},
 		},
 	},

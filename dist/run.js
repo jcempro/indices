@@ -316,19 +316,19 @@ function B(t) {
 const X = "data:text/javascript;base64,aW1wb3J0e0VDT05JRFggYXMgb31mcm9tIi4vRWNvbm9taWNJbmRpY2VzQ2xpZW50LmpzIjtpbXBvcnR7bG9hZEZyb21TdG9yYWdlIGFzIHMsZGV2ZXJpYUF0dWFsaXphciBhcyBhfWZyb20iLi9zdG9yYWdlLmpzIjtzZWxmLmE9YXN5bmMgcj0+e2lmKHIudC5lPT09InVwZGF0ZSIpdHJ5e2NvbnN0IGU9YXdhaXQgby5vKCk7c2VsZi5yKHtlOiJpbmRpY2VzIixzOmV9KX1jYXRjaChlKXtzZWxmLnIoe2U6ImVycm9yIixpOmUgaW5zdGFuY2VvZiBFcnJvcj9lLm46IlVua25vd24gZXJyb3IifSl9fTsoYXN5bmMoKT0+e2NvbnN0IHI9YXdhaXQgcygpO2lmKCFyfHxhKHIpKXtjb25zdCBlPWF3YWl0IG8ubygpO2UmJnNlbGYucih7ZToiaW5kaWNlcyIsczplfSl9fSkoKTsK";
 class z {
   constructor() {
-    this.worker = null, this.currentIndices = null, this.pendingResolvers = [], this.isNode = typeof process < "u" && process.versions?.node !== void 0, this._initialize().catch(console.error);
+    this.worker = null, this.currentIndices = null, this.pendingResolvers = [], this.isNode = typeof process < "u" && process.versions?.node !== void 0, this.initialize().catch(console.error);
   }
-  async _initialize() {
-    this.isNode || await this._initWebWorker();
+  async initialize() {
+    this.isNode || await this.initWebWorker();
   }
-  async _initWebWorker() {
+  async initWebWorker() {
     if (!(typeof Worker > "u"))
       try {
         const e = new Blob([X], {
           type: "application/javascript"
         });
         this.worker = new Worker(URL.createObjectURL(e)), this.worker.onmessage = (r) => {
-          r.data.type === "indices" && this._handleNewIndices(r.data.indices);
+          r.data.type === "indices" && this.handleNewIndices(r.data.indices);
         }, this.worker.onerror = (r) => {
           console.error("Worker error:", r), this.handleWorkerError();
         };
@@ -336,7 +336,7 @@ class z {
         console.error("Worker initialization failed:", e);
       }
   }
-  _handleNewIndices(e) {
+  handleNewIndices(e) {
     this.currentIndices = e, e && N(e).catch(console.error), this.resolvePendingPromises(e);
   }
   handleWorkerError() {
@@ -345,13 +345,13 @@ class z {
   resolvePendingPromises(e) {
     this.pendingResolvers.forEach((r) => r(e)), this.pendingResolvers = [];
   }
-  async _getIndices() {
+  async getIndices() {
     const e = await R();
     return e && !B(e) ? e.indices : this.isNode ? this.fetchIndicesNode() : this.fetchIndicesBrowser();
   }
   async fetchIndicesNode() {
     try {
-      const e = await this.fetchAllIndices(this.currentIndices);
+      const e = await this.fetchAll(this.currentIndices);
       return e && (await N(e), this.currentIndices = e), e;
     } catch (e) {
       return console.error("Node fetch failed:", e), null;
@@ -362,7 +362,7 @@ class z {
       this.pendingResolvers.push(e), this.worker?.postMessage({ type: "update" });
     }) : this.fetchIndicesNode();
   }
-  async fetchAllIndices(e) {
+  async fetchAll(e) {
     const r = {};
     return await Promise.all(
       Object.entries(P).map(async ([n, o]) => {
