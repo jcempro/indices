@@ -76,7 +76,6 @@ export default defineConfig({
 		minifyIdentifiers: true,
 		minifySyntax: true,
 		minifyWhitespace: true,
-		legalComments: 'none',
 		target: 'es2020',
 	},
 	optimizeDeps: {
@@ -84,13 +83,7 @@ export default defineConfig({
 			minifyIdentifiers: true,
 			minifySyntax: true,
 			minifyWhitespace: true,
-			// Configuração alternativa para minificar classes
-			// Isso substitui a propriedade keepClassNames
-			supported: {
-				'class-field': true,
-				'class-private-field': true,
-				'class-static-field': true,
-			},
+			target: 'es2020',
 		},
 	},
 });

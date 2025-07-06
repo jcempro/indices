@@ -4,17 +4,6 @@ import path from 'path';
 // Lista de exceções que NÃO devem ser otimizadas
 const EXCEÇÕES = ['getIndices', 'ECONIDX'];
 
-// Regex melhorado para capturar exceções
-const createExemptionRegex = (name: string) => [
-	new RegExp(`([^a-zA-Z0-9_]|^)${name}([^a-zA-Z0-9_]|$)`, 'g'),
-	new RegExp(`\\.${name}([^a-zA-Z0-9_]|$)`, 'g'),
-	new RegExp(`\\["${name}"\\]`, 'g'),
-	new RegExp(`\\['${name}'\\]`, 'g'),
-	new RegExp(`\`\\$\\{${name}\\}\``, 'g'),
-	new RegExp(`class\\s+${name}\\b`, 'g'),
-	new RegExp(`interface\\s+${name}\\b`, 'g'),
-];
-
 export default function esbuildManglePlugin() {
 	return {
 		name: 'esbuild-mangle',
@@ -27,40 +16,30 @@ export default function esbuildManglePlugin() {
 			}
 
 			try {
-				// 1. Proteger exceções
-				let protectedCode = EXCEÇÕES.reduce((acc, name) => {
-					createExemptionRegex(name).forEach((regex) => {
-						acc = acc.replace(regex, (match) =>
-							match.replace(name, `__EXCEPTION_${name}__`),
-						);
-					});
-					return acc;
-				}, code);
+				// 1. Proteger exceções usando um prefixo único
+				let protectedCode = code;
+				EXCEÇÕES.forEach((name) => {
+					protectedCode = protectedCode.replace(
+						new RegExp(
+							`([^a-zA-Z0-9_]|^)${name}([^a-zA-Z0-9_]|$)`,
+							'g',
+						),
+						`$1__PROTECTED_${name}__$2`,
+					);
+				});
 
-				// 2. Marcar métodos de classe para minificação
-				protectedCode = protectedCode.replace(
-					/(class|interface)\s+(\w+)[^{]*{([^}]*)}/g,
-					(match, type, name, body) => {
-						const processedBody = body.replace(
-							/(\w+)\s*\(([^)]*)\)\s*{/g,
-							(m, method) => `__MANGLE_METHOD_${method}__(`,
-						);
-						return `${type} ${name} {${processedBody}}`;
-					},
-				);
-
-				// 3. Configuração agressiva (usando a abordagem correta para minificar classes)
+				// 2. Processar com ESBuild usando configuração agressiva
 				const result = await transform(protectedCode, {
 					loader: /\.tsx?$/.test(id) ? 'ts' : 'js',
 					minify: true,
 					minifyIdentifiers: true,
 					minifySyntax: true,
 					minifyWhitespace: true,
-					mangleProps: /^(?!__EXCEPTION_|__MANGLE_METHOD_).+$/,
+					mangleProps: /^[^_].+$/, // Mangle em tudo que não começa com _
 					mangleQuoted: true,
-					// Abordagem correta para minificar nomes de classe/métodos
+					keepNames: false,
+					// Configuração especial para métodos de classe
 					charset: 'utf8',
-					legalComments: 'none',
 					target: 'es2020',
 					supported: {
 						'class-field': true,
@@ -69,23 +48,19 @@ export default function esbuildManglePlugin() {
 					},
 				});
 
-				// 4. Restaurar exceções
-				let finalCode = EXCEÇÕES.reduce(
-					(acc, name) =>
-						acc.replace(
-							new RegExp(`__EXCEPTION_${name}__`, 'g'),
-							name,
-						),
-					result.code,
-				);
+				// 3. Restaurar exceções
+				let finalCode = result.code;
+				EXCEÇÕES.forEach((name) => {
+					finalCode = finalCode.replace(
+						new RegExp(`__PROTECTED_${name}__`, 'g'),
+						name,
+					);
+				});
 
-				// Remover marcações de métodos
-				finalCode = finalCode.replace(
-					/__MANGLE_METHOD_(\w+)__/g,
-					'$1',
-				);
-
-				return { code: finalCode, map: null };
+				return {
+					code: finalCode,
+					map: null,
+				};
 			} catch (error) {
 				console.error(`Erro ao processar ${id}:`, error);
 				return null;
