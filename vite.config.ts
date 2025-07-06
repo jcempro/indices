@@ -1,50 +1,50 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
-import virtual from '@rollup/plugin-virtual';
-import { readFileSync } from 'fs';
+import { transform } from 'esbuild';
 
 export default defineConfig({
 	plugins: [
 		{
-			name: 'worker-loader',
-			transform(code, id) {
-				if (id.includes('worker.ts')) {
-					return `export default ${JSON.stringify(code)};`;
+			name: 'obfuscator',
+			async transform(code, id) {
+				if (id.includes('EconomicIndicesClient')) {
+					const result = await transform(code, {
+						minify: true,
+						keepNames: false,
+						mangleProps: /^[^_].*$/,
+					});
+					return { code: result.code, map: null };
 				}
 			},
 		},
 	],
 	build: {
+		outDir: 'dist',
+		minify: 'esbuild',
 		lib: {
 			entry: resolve(__dirname, 'src/run.ts'),
 			name: 'EconomicIndices',
-			fileName: (format) => `economic-indices.${format}.js`,
+			fileName: 'economic-indices',
 			formats: ['es'],
 		},
+		esbuild: {
+			minifyIdentifiers: true, // Ofusca nomes
+			minifySyntax: true, // Minifica estrutura
+			minifyWhitespace: true, // Remove espaços
+			legalComments: 'none', // Remove comentários
+			keepNames: false, // Crucial para ofuscar
+			mangleProps: /^[^_].*$/, // Ofusca propriedades
+			charset: 'ascii', // Remove caracteres unicode desnecessários
+		},
 		rollupOptions: {
 			output: {
-				// Configuração para workers
-				entryFileNames: 'assets/[name].js',
-				chunkFileNames: 'assets/[name].[hash].js',
-				assetFileNames: 'assets/[name].[hash][extname]',
+				inlineDynamicImports: true,
+				compact: true,
+				generatedCode: {
+					arrowFunctions: true,
+					constBindings: true,
+				},
 			},
 		},
-	},
-	// Configuração específica para workers
-	worker: {
-		format: 'es',
-		rollupOptions: {
-			output: {
-				entryFileNames: 'workers/[name].js',
-			},
-		},
-	},
-	resolve: {
-		alias: {
-			'@worker': resolve(__dirname, './src/worker.ts'), // Alias para o worker
-		},
-	},
-	server: {
-		open: '/index.html',
 	},
 });
