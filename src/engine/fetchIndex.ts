@@ -1,4 +1,5 @@
-import { IndexValue } from './types.js';
+import { DEFAULT_FETCH_OPTIONS } from '../config.js';
+import { IndexValue } from '../types/types.js';
 import {
 	EconomicIndicesLogger,
 	FetchOptions,
@@ -9,13 +10,13 @@ const logger = EconomicIndicesLogger.getInstance();
 
 interface FetchIndexParams<T = any> {
 	url: string;
-	parser: (data: T) => number | IndexValue | null;
-	fallback?: IndexValue;
-	indexName: string;
-	fetchOptions?: FetchOptions;
-	historicalConfig?: {
+	p: (data: any) => number | IndexValue | null;
+	fb?: IndexValue;
+	iname: string;
+	fOpt?: FetchOptions;
+	hCfg?: {
 		urlBuilder: (baseUrl: string) => string;
-		parser: (data: any) => number[];
+		p: (data: any) => number[];
 	};
 }
 
@@ -24,15 +25,15 @@ export async function fetchIndex<T = any>(
 ): Promise<IndexValue> {
 	const {
 		url,
-		parser,
-		fallback,
-		indexName,
-		fetchOptions = { retries: 3, retryDelay: 1000, timeout: 8000 },
-		historicalConfig,
+		p,
+		fb,
+		iname,
+		fOpt = DEFAULT_FETCH_OPTIONS,
+		hCfg,
 	} = params;
 
 	try {
-		logger.log(`> '${indexName}'`, url);
+		logger.log(`> '${iname}'`, url);
 
 		// 1. Busca dados atuais (com tratamento correto do Response)
 		const currentData = await fetchWithRetry(
@@ -43,32 +44,32 @@ export async function fetchIndex<T = any>(
 				}
 
 				const data = await response.json();
-				const parsed = parser(data);
+				const parsed = p(data);
 
 				if (parsed === null || parsed === undefined) {
-					throw new Error(`Invalid ${indexName} data structure`);
+					throw new Error(`Invalid ${iname} data structure`);
 				}
 				return parsed;
 			},
-			fetchOptions,
+			fOpt,
 		);
 
 		// 2. Busca dados históricos (se configurado)
 		let historicalValues: number[] = [];
-		if (historicalConfig) {
+		if (hCfg) {
 			try {
-				const historicalUrl = historicalConfig.urlBuilder(url);
+				const historicalUrl = hCfg.urlBuilder(url);
 				historicalValues = await fetchWithRetry(
 					historicalUrl,
 					async (response) => {
 						const data = await response.json();
-						return historicalConfig.parser(data);
+						return hCfg.p(data);
 					},
-					{ ...fetchOptions, timeout: 15000 }, // Timeout maior para históricos
+					{ ...fOpt, timeout: 15000 }, // Timeout maior para históricos
 				);
 			} catch (error) {
 				logger.error(
-					`Failed to fetch historical ${indexName} data`,
+					`Failed to fetch historical ${iname} data`,
 					error,
 				);
 			}
@@ -77,8 +78,8 @@ export async function fetchIndex<T = any>(
 		// 3. Formata a resposta
 		return formatIndexValue(currentData, historicalValues);
 	} catch (error) {
-		logger.error(`Failed to fetch ${indexName} data:`, error);
-		return fallback ?? createFallbackIndex();
+		logger.error(`Failed to fetch ${iname} data:`, error);
+		return fb ?? createfbIndex();
 	}
 }
 
@@ -110,7 +111,7 @@ function calculateAverage(values: number[]): number {
 	);
 }
 
-function createFallbackIndex(): IndexValue {
+function createfbIndex(): IndexValue {
 	return {
 		current: 0,
 		updated: new Date(),

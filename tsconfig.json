@@ -2,16 +2,19 @@
 	"compilerOptions": {
 		"target": "ES2020",
 		"module": "NodeNext",
-		"lib": ["ES2020", "webworker", "DOM"],
+		"lib": ["ES2022", "webworker", "DOM"],
 		"strict": true,
 		"moduleResolution": "NodeNext",
 		"esModuleInterop": true,
 		"skipLibCheck": true,
 		"forceConsistentCasingInFileNames": true,
-		"outDir": "./dist",
-		"rootDir": "./src",
-		"types": ["node", "vite/client"]
+		"types": ["node", "vite/client"],
+		"noEmit": true
 	},
-	"include": ["src/**/*"],
+	"include": [
+		"src/types/global.d.ts",
+		"src/types/vite-env.d.ts",
+		"src/**/*"
+	],
 	"exclude": ["node_modules"]
 }

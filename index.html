@@ -7,7 +7,7 @@
 			content="width=device-width, initial-scale=1.0"
 		/>
 		<title>Teste Índices Econômicos</title>
-		<script type="module" src="src/run.js"></script>
+		<script type="module" src="src/run.ts"></script>
 		<style>
 			body {
 				font-family: Arial, sans-serif;
@@ -103,7 +103,7 @@
 				// Carrega e exibe os índices iniciais
 				async function loadIndices() {
 					try {
-						const indices = await economicIndices.getIndices();
+						const indices = await window.ECONIDX.getIndices();
 						indicesContainer.innerHTML = formatIndices(
 							indices?.indices ?? indices,
 						);
@@ -118,7 +118,7 @@
 					indicesContainer.innerHTML =
 						'<p class="loading">Atualizando...</p>';
 					try {
-						await economicIndices.updateIndices();
+						await ECONIDX.updateIndices();
 						await loadIndices();
 					} catch (error) {
 						indicesContainer.innerHTML = `<p class="error">Erro ao atualizar: ${error.message}</p>`;
@@ -136,7 +136,9 @@
 				});
 
 				// Inicializa
-				await loadIndices();
+				loadIndices().then(() => {
+					loadIndices;
+				});
 			});
 		</script>
 	</body>

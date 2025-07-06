@@ -1,9 +1,21 @@
-export const MAX_ATTEMPTS = 10;
+import { fetchCDI } from './indices/cdi.js';
+import { fetchINPC } from './indices/inpc.js';
+import { fetchIPCA } from './indices/ipca.js';
+import { fetchSelic } from './indices/selic.js';
+import { fetchs } from './types/types.js';
+import { FetchOptions } from './engine/utils.js';
 
-export const SOURCES = {
-	selic:
-		'https://api.bcb.gov.br/dados/serie/bcdata.sgs.11/dados/ultimos/1?formato=json',
-	cdi: 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.12/dados/ultimos/1?formato=json',
-	ipca: 'https://servicodados.ibge.gov.br/api/v3/agregados/1737/periodos/ultimo/variaveis/63?localidades=N1[all]',
-	inpc: 'https://servicodados.ibge.gov.br/api/v3/agregados/1737/periodos/ultimo/variaveis/188?localidades=N1[all]',
+export const CACHE_TTL = 30 * 60 * 1000; // 5 minutos em milissegundos
+
+export const DEFAULT_FETCH_OPTIONS: FetchOptions = {
+	retries: 7,
+	retryDelay: 1500,
+	timeout: 1000,
+};
+
+export const SOURCES: Record<PropertyKey, fetchs> = {
+	Selic: fetchSelic,
+	CDI: fetchCDI,
+	ipca: fetchIPCA,
+	inpc: fetchINPC,
 };

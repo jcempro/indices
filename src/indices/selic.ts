@@ -1,6 +1,6 @@
-import { fetchIndex } from '../lib/fetchIndex.js';
-import { IndexValue } from '../lib/types.js';
-import { getValidBCBDate, parseNumber } from '../lib/utils.js';
+import { fetchIndex } from '../engine/fetchIndex.js';
+import { IndexValue } from '../types/types.js';
+import { getValidBCBDate, parseNumber } from '../engine/utils.js';
 
 export async function fetchSelic(
 	fallback?: IndexValue,
@@ -10,15 +10,15 @@ export async function fetchSelic(
 
 	return fetchIndex({
 		url: 'https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json',
-		parser: (data) => {
+		p: (data: any) => {
 			if (!data?.length) return null;
 			return parseNumber(data[0].valor);
 		},
-		fallback,
-		indexName: 'SELIC',
-		historicalConfig: {
+		fb: fallback,
+		iname: 'SELIC',
+		hCfg: {
 			urlBuilder: () => historicalUrl,
-			parser: (data) => {
+			p: (data: any) => {
 				if (!Array.isArray(data)) return [];
 				return data.map((item) => parseNumber(item.valor));
 			},

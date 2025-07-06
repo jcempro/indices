@@ -1,4 +1,5 @@
-import { IndexValue } from './types.js';
+import { CACHE_TTL } from '../config.js';
+import { IndexValue } from '../types/types.js';
 
 export interface FetchOptions {
 	retries?: number;
@@ -10,13 +11,6 @@ const responseCache = new Map<
 	string,
 	{ data: any; timestamp: number }
 >();
-const CACHE_TTL = 30 * 60 * 1000; // 5 minutos em milissegundos
-
-export const DEFAULT_FETCH_OPTIONS: FetchOptions = {
-	retries: 7,
-	retryDelay: 1500,
-	timeout: 1000,
-};
 
 // src/lib/utils/dateUtils.ts
 export function getValidBCBDate(yearsAgo: number): string {

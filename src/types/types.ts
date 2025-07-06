@@ -1,5 +1,3 @@
-import { economicIndices } from './EconomicIndicesClient.js';
-
 export interface IndexValue {
 	current: number;
 	avg?: number;
@@ -18,16 +16,9 @@ export type WorkerCommand = {
 	payload: EconomicIndices | null;
 };
 
-export const IndicesName = [
-	'SELIC',
-	'CDI',
-	'IPCA',
-	'INPC',
-	'Câmbio',
-	'update',
-];
-
 export interface StoredIndices {
 	indices: EconomicIndices;
 	updated: string;
 }
+
+export type fetchs = (fallback?: IndexValue) => Promise<IndexValue>;

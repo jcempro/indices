@@ -1,4 +1,4 @@
-import { EconomicIndices, StoredIndices } from './types.js';
+import { EconomicIndices, StoredIndices } from '../types/types.js';
 
 const STORAGE_KEY = 'economic_indices_data';
 
@@ -59,7 +59,7 @@ export async function loadFromStorage(): Promise<StoredIndices | null> {
 	}
 }
 
-export async function saveToStorage(
+export async function _saveToStorage(
 	data: EconomicIndices,
 ): Promise<void> {
 	try {
@@ -88,7 +88,7 @@ export async function saveToStorage(
 }
 
 // shouldUpdate pode permanecer síncrono
-export function shouldUpdate(
+export function deveriaAtualizar(
 	storedData: StoredIndices | null,
 ): boolean {
 	if (!storedData) return true;

@@ -1,6 +1,6 @@
-import { fetchIndex } from '../lib/fetchIndex.js';
-import { IndexValue } from '../lib/types.js';
-import { getValidIBGEDate, parseNumber } from '../lib/utils.js';
+import { fetchIndex } from '../engine/fetchIndex.js';
+import { IndexValue } from '../types/types.js';
+import { getValidIBGEDate, parseNumber } from '../engine/utils.js';
 
 /**
  * Calcula a variação percentual entre dois números-índice
@@ -21,7 +21,7 @@ export async function fetchIPCA(
 
 	return fetchIndex({
 		url: `https://servicodados.ibge.gov.br/api/v3/agregados/1737/periodos/-12/variaveis/2266?localidades=N1[all]`,
-		parser: (data) => {
+		p: (data: any) => {
 			const series = data?.[0]?.resultados?.[0]?.series?.[0]?.serie;
 			if (!series || Object.keys(series).length < 12) return null;
 
@@ -35,12 +35,12 @@ export async function fetchIPCA(
 			// Variação dos últimos 12 meses
 			return parseNumber(calculateVariation(lastValue, firstValue));
 		},
-		fallback,
-		indexName: 'IPCA',
-		historicalConfig: {
+		fb: fallback,
+		iname: 'IPCA',
+		hCfg: {
 			urlBuilder: () =>
 				`https://servicodados.ibge.gov.br/api/v3/agregados/1737/periodos/${fiveYearsAgo}-${oneYearAgo}/variaveis/2266?localidades=N1[all]`,
-			parser: (data) => {
+			p: (data) => {
 				const series = data?.[0]?.resultados?.[0]?.series?.[0]?.serie;
 				if (!series) return [];
 
