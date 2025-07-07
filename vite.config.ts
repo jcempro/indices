@@ -52,7 +52,7 @@ export default defineConfig({
 		sourcemap: false,
 		lib: {
 			entry: resolve(__dirname, 'src/run.ts'),
-			formats: ['es'],
+			formats: ['iife'],
 			fileName: () => 'run.js',
 			name: 'EconomicIndices',
 		},

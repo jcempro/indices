@@ -35,7 +35,7 @@ export default function esbuildManglePlugin() {
 					minifyIdentifiers: true,
 					minifySyntax: true,
 					minifyWhitespace: true,
-					mangleProps: /^[^_].+$/, // Mangle em tudo que não começa com _
+					mangleProps: /^[^_]{2.2}.+$/, // Mangle em tudo que não começa com _
 					mangleQuoted: true,
 					keepNames: false,
 					// Configuração especial para métodos de classe
