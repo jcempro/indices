@@ -7,7 +7,15 @@
 			content="width=device-width, initial-scale=1.0"
 		/>
 		<title>Teste Índices Econômicos</title>
-		<script src="assets/js/main.js"></script>
+		<script>
+			(function () {
+				/* garante um script sempre atual */
+				const s = document.createElement('script');
+				s.src = `assets/js/main.js?t=${Date.now()}`;
+				s.type = 'text/javascript';
+				document.head.appendChild(s);
+			})();
+		</script>
 		<style>
 			/* Seus estilos permanecem os mesmos */
 			body {
@@ -46,6 +54,7 @@
 		<div>
 			<button id="refresh">Atualizar Índices</button>
 			<button id="checkStorage">Verificar Storage</button>
+			<button id="clearStorage">Limpar Storage</button>
 		</div>
 
 		<div id="indices">
