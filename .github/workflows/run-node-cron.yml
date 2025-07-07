@@ -20,6 +20,12 @@ jobs:
       - name: Run Script
         run: node ./dist/run.js
 
+      - name: Move indices.json to dist
+        run: |
+          if [ -f indices.json ]; then
+            mv indices.json ./dist/
+          fi
+
       - name: Commit Changes
         run: |
           git config --global user.name "GitHub Actions"
