@@ -4,7 +4,11 @@ import { isNodeEnvironment } from './engine/utils.js';
 
 if (typeof window !== 'undefined') {
 	(window as any).ECONIDX = ECONIDX;
-	(window as any).clearIndices = clearStorage;
+	(window as any).clearIndices = async () => {
+		await clearStorage().catch((error) => {
+			console.error('Erro ao limpar storage:', error);
+		});
+	};
 }
 
 if (isNodeEnvironment()) {
