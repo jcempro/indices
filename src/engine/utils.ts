@@ -19,6 +19,13 @@ const responseCache = new Map<
 	{ data: any; timestamp: number }
 >();
 
+/**
+ * Adaptação da função existente em utils.ts para formato BCB (dd-mm-yyyy)
+ */
+export function formatBCBDate(date: Date): string {
+	return getValidBCBDate(0, date); // Reaproveita a função existente
+}
+
 export function getValidBCBDate(
 	yearsAgo: number,
 	baseDate?: Date,

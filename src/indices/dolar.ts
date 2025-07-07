@@ -5,16 +5,10 @@ import {
 	getValidBCBDate,
 	EconomicIndicesLogger,
 	calculateAverageRate,
+	formatBCBDate,
 } from '../engine/utils.js';
 
 const logger = EconomicIndicesLogger.getInstance();
-
-/**
- * Adaptação da função existente em utils.ts para formato BCB (dd-mm-yyyy)
- */
-function formatBCBDate(date: Date): string {
-	return getValidBCBDate(0, date); // Reaproveita a função existente
-}
 
 /**
  * Obtém a data do último dia útil
