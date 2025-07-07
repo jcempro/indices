@@ -98,3 +98,26 @@ export function deveriaAtualizar(
 		lastUpdated.getFullYear() !== today.getFullYear()
 	);
 }
+
+// NOVA FUNÇÃO ADICIONADA (única alteração significativa)
+export async function clearStorage(): Promise<void> {
+	try {
+		if (typeof window !== 'undefined' && window.localStorage) {
+			localStorage.removeItem(STORAGE_KEY);
+		} else if (isNodeEnvironment()) {
+			const { fs, path } = await loadNodeModules();
+			const filePath = path.join(process.cwd(), 'indices.json');
+			try {
+				await fs.unlink(filePath);
+			} catch (error) {
+				if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
+					throw error;
+				}
+				// Arquivo não existe, não precisa fazer nada
+			}
+		}
+	} catch (error) {
+		console.error('Failed to clear storage:', error);
+		throw error;
+	}
+}
