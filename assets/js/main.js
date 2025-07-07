@@ -23,7 +23,9 @@
 			}`
 		:	'';
 	script.src =
-		isLocal ? './src/run.ts' + cacheBuster : './run.js' + cacheBuster;
+		isLocal ?
+			'./src/run.ts' + cacheBuster
+		:	'./dist/run.js' + cacheBuster;
 
 	script.onload = initApp;
 	script.onerror = () => {
