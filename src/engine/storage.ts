@@ -1,8 +1,6 @@
 import { EconomicIndices, StoredIndices } from '../types/types.js';
 import { isNodeEnvironment } from './utils.js';
 
-const STORAGE_KEY = 'economic_indices_data';
-
 // Helper para detectar ambiente Node.js
 
 // Helper para carregar módulos do Node.js dinamicamente
@@ -11,6 +9,15 @@ async function loadNodeModules() {
 	const { default: path } = await import('path');
 	return { fs, path };
 }
+
+const STORE_PATH = async () => {
+	if (isNodeEnvironment()) {
+		const { fs, path } = await loadNodeModules();
+		return path.join(process.cwd(), 'indices.json');
+	}
+
+	return 'economic_indices_data';
+};
 
 function getLatestUpdatedDate(data: EconomicIndices): Date {
 	let latestDate = new Date(0);
@@ -26,19 +33,20 @@ function getLatestUpdatedDate(data: EconomicIndices): Date {
 }
 
 export async function loadFromStorage(): Promise<StoredIndices | null> {
+	const fpath = await STORE_PATH();
+
 	try {
 		// Navegador
 		if (typeof window !== 'undefined' && window.localStorage) {
-			const stored = localStorage.getItem(STORAGE_KEY);
+			const stored = localStorage.getItem(fpath);
 			return stored ? JSON.parse(stored) : null;
 		}
 		// Node.js
 		else if (isNodeEnvironment()) {
-			const { fs, path } = await loadNodeModules();
-			const filePath = path.join(process.cwd(), 'indices.json');
+			const { fs } = await loadNodeModules();
 
 			try {
-				const rawData = await fs.readFile(filePath, 'utf-8');
+				const rawData = await fs.readFile(fpath, 'utf-8');
 				return JSON.parse(rawData);
 			} catch (error) {
 				if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
@@ -57,6 +65,8 @@ export async function loadFromStorage(): Promise<StoredIndices | null> {
 export async function saveToStorage(
 	data: EconomicIndices,
 ): Promise<void> {
+	const fpath = await STORE_PATH();
+
 	try {
 		const latestUpdated = getLatestUpdatedDate(data);
 		const storedData: StoredIndices = {
@@ -66,17 +76,14 @@ export async function saveToStorage(
 
 		// Navegador
 		if (typeof window !== 'undefined' && window.localStorage) {
-			localStorage.setItem(STORAGE_KEY, JSON.stringify(storedData));
+			localStorage.setItem(fpath, JSON.stringify(storedData));
 		}
 		// Node.js
 		else if (isNodeEnvironment()) {
 			const { fs, path } = await loadNodeModules();
 			console.log(process.cwd());
-			const filePath = path.join(process.cwd(), 'indices.json');
-			await fs.writeFile(
-				filePath,
-				JSON.stringify(storedData, null, 2),
-			);
+
+			await fs.writeFile(fpath, JSON.stringify(storedData, null, 2));
 		}
 	} catch (error) {
 		console.error('Failed to save to storage:', error);
@@ -100,14 +107,15 @@ export function deveriaAtualizar(
 }
 
 export async function clearStorage(): Promise<void> {
+	const fpath = await STORE_PATH();
+
 	try {
 		if (typeof window !== 'undefined' && window.localStorage) {
-			localStorage.removeItem(STORAGE_KEY);
+			localStorage.removeItem(fpath);
 		} else if (isNodeEnvironment()) {
 			const { fs, path } = await loadNodeModules();
-			const filePath = path.join(process.cwd(), 'indices.json');
 			try {
-				await fs.unlink(filePath);
+				await fs.unlink(fpath);
 			} catch (error) {
 				if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
 					throw error;
