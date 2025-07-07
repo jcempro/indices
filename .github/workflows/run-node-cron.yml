@@ -27,11 +27,13 @@ jobs:
           fi
 
       - name: Commit Changes
+        env:
+          GH_TOKEN: ${{ secrets.GH_TOKEN }} # Ou use secrets.GITHUB_TOKEN
         run: |
           git config --global user.name "GitHub Actions"
           git config --global user.email "actions@github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GH_TOKEN }}@github.com/${{ github.repository }}.git
+          git remote set-url origin https://x-access-token:$GH_TOKEN@github.com/${{ github.repository }}.git
           git add dist/indices.json          
-          git commit -m "Atualização índices em $(date -d '-3 hours' '+%d/%m/%Y %H:%M')" || echo "Sem alterações"
+          git commit -m "Atualização semanal de índices"
           git push
           git push origin main
