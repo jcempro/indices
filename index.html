@@ -7,8 +7,8 @@
 			content="width=device-width, initial-scale=1.0"
 		/>
 		<title>Teste Índices Econômicos</title>
-		<script type="module" src="src/run.ts"></script>
 		<style>
+			/* Seus estilos permanecem os mesmos */
 			body {
 				font-family: Arial, sans-serif;
 				max-width: 800px;
@@ -34,6 +34,9 @@
 				font-weight: bold;
 				color: #0066cc;
 			}
+			.error {
+				color: #cc0000;
+			}
 		</style>
 	</head>
 	<body>
@@ -49,76 +52,119 @@
 		</div>
 
 		<script>
-			document.addEventListener('DOMContentLoaded', async () => {
+			// Verifica se está em localhost ou domínio de desenvolvimento
+			const isLocal =
+				window.location.hostname === 'localhost' ||
+				window.location.hostname === '127.0.0.1' ||
+				window.location.hostname.endsWith('.local');
+
+			// Carrega o script apropriado
+			const script = document.createElement('script');
+			script.type = 'module';
+
+			// Adiciona um parâmetro de cache busting para desenvolvimento
+			const cacheBuster =
+				isLocal ?
+					`?t=${
+						isLocal ?
+							Date.now()
+						:	[
+								now.getFullYear(),
+								String(now.getMonth() + 1).padStart(2, '0'),
+								String(now.getDate()).padStart(2, '0'),
+							].join('')
+					}`
+				:	'';
+			script.src =
+				isLocal ?
+					'./src/run.ts' + cacheBuster
+				:	'./run.js' + cacheBuster;
+
+			script.onload = initApp;
+			script.onerror = () => {
+				console.error('Erro ao carregar o script');
+				document.getElementById('indices').innerHTML =
+					'<p class="error">Erro ao carregar o módulo de índices</p>';
+			};
+
+			document.head.appendChild(script);
+
+			function formatValue(value, decimals = 2) {
+				return value?.toFixed?.(decimals) ?? 'N/A';
+			}
+
+			function formatIndice(indice, name) {
+				const isCurrency = name.toLowerCase().includes('câmbio');
+				const prefix = isCurrency ? 'R$ ' : '';
+				const suffix = isCurrency ? '' : '%';
+
+				return `
+                <div class="indice">
+                    <h3>${name}</h3>
+                    <p>Atual: <span class="value">${prefix}${formatValue(indice?.current, isCurrency ? 4 : 2)}${suffix}</span></p>
+                    ${
+											indice?.avg !== undefined ?
+												`<p>Média: <span class="value">${prefix}${formatValue(indice.avg, isCurrency ? 4 : 2)}${suffix}</span></p>`
+											:	''
+										}
+                </div>
+            `;
+			}
+
+			function formatDate(dateString) {
+				if (!dateString) return 'Nunca atualizado';
+				const date = new Date(dateString);
+				return date.toLocaleString('pt-BR');
+			}
+
+			async function initApp() {
+				// Aguarda um pequeno delay para garantir que o módulo foi carregado
+				await new Promise((resolve) => setTimeout(resolve, 100));
+
+				if (!window.ECONIDX) {
+					console.error('ECONIDX não está disponível na window');
+					document.getElementById('indices').innerHTML =
+						'<p class="error">Erro ao inicializar o módulo</p>';
+					return;
+				}
+
 				const indicesContainer = document.getElementById('indices');
 				const refreshBtn = document.getElementById('refresh');
 				const checkStorageBtn =
 					document.getElementById('checkStorage');
 
-				// Função para formatar valor com casas decimais
-				function formatValue(value, decimals = 2) {
-					return value?.toFixed?.(decimals) ?? 'N/A';
-				}
-
-				// Função para formatar os índices
-				function formatIndices(indices) {
-					if (!indices) return '<p>Nenhum dado disponível</p>';
-
-					const formatDate = (dateString) => {
-						if (!dateString) return 'Nunca atualizado';
-						const date = new Date(dateString);
-						return date.toLocaleString('pt-BR');
-					};
-
-					return `
-                    <div class="indice">
-                        <h3>SELIC</h3>
-                        <p>Atual: <span class="value">${formatValue(indices.selic?.current)}%</span></p>
-                        ${indices.selic?.avg !== undefined ? `<p>Média: <span class="value">${formatValue(indices.selic.avg)}%</span></p>` : ''}
-                    </div>
-                    <div class="indice">
-                        <h3>CDI</h3>
-                        <p>Atual: <span class="value">${formatValue(indices.cdi?.current)}%</span></p>
-                        ${indices.cdi?.avg !== undefined ? `<p>Média: <span class="value">${formatValue(indices.cdi.avg)}%</span></p>` : ''}
-                    </div>
-                    <div class="indice">
-                        <h3>IPCA</h3>
-                        <p>Atual: <span class="value">${formatValue(indices.ipca?.current)}%</span></p>
-                        ${indices.ipca?.avg !== undefined ? `<p>Média: <span class="value">${formatValue(indices.ipca.avg)}%</span></p>` : ''}
-                    </div>
-                    <div class="indice">
-                        <h3>INPC</h3>
-                        <p>Atual: <span class="value">${formatValue(indices.inpc?.current)}%</span></p>
-                        ${indices.inpc?.avg !== undefined ? `<p>Média: <span class="value">${formatValue(indices.inpc.avg)}%</span></p>` : ''}
-                    </div>
-                    <div class="indice">
-                        <h3>Câmbio (USD/BRL)</h3>
-                        <p>Atual: <span class="value">R$ ${formatValue(indices.exchange?.current, 4)}</span></p>
-                        ${indices.exchange?.avg !== undefined ? `<p>Média: <span class="value">R$ ${formatValue(indices.exchange.avg, 4)}</span></p>` : ''}
-                    </div>
-                    <p><em>Última atualização: ${formatDate(indices.updated)}</em></p>
-                `;
-				}
-
-				// Carrega e exibe os índices iniciais
 				async function loadIndices() {
 					try {
 						const indices = await window.ECONIDX.getIndices();
-						indicesContainer.innerHTML = formatIndices(
-							indices?.indices ?? indices,
-						);
+						const indicesData = indices?.indices ?? indices;
+
+						if (!indicesData) {
+							indicesContainer.innerHTML =
+								'<p>Nenhum dado disponível</p>';
+							return;
+						}
+
+						let html = '';
+						// Renderiza dinamicamente todos os índices
+						for (const [name, data] of Object.entries(indicesData)) {
+							if (name !== 'updated' && typeof data === 'object') {
+								html += formatIndice(data, name.toUpperCase());
+							}
+						}
+
+						html += `<p><em>Última atualização: ${formatDate(indicesData.updated)}</em></p>`;
+						indicesContainer.innerHTML = html;
 					} catch (error) {
 						indicesContainer.innerHTML = `<p class="error">Erro ao carregar índices: ${error.message}</p>`;
 						console.error('Erro ao carregar índices:', error);
 					}
 				}
 
-				// Atualiza os índices
 				refreshBtn.addEventListener('click', async () => {
 					indicesContainer.innerHTML =
 						'<p class="loading">Atualizando...</p>';
 					try {
-						await ECONIDX.updateIndices();
+						await window.ECONIDX.getIndices();
 						await loadIndices();
 					} catch (error) {
 						indicesContainer.innerHTML = `<p class="error">Erro ao atualizar: ${error.message}</p>`;
@@ -126,7 +172,6 @@
 					}
 				});
 
-				// Verifica o storage
 				checkStorageBtn.addEventListener('click', () => {
 					const stored = JSON.parse(
 						localStorage.getItem('economic_indices_data'),
@@ -135,11 +180,8 @@
 					alert('Verifique o console para ver o conteúdo do storage');
 				});
 
-				// Inicializa
-				loadIndices().then(() => {
-					loadIndices;
-				});
-			});
+				await loadIndices();
+			}
 		</script>
 	</body>
 </html>
