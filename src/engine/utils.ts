@@ -19,17 +19,25 @@ const responseCache = new Map<
 	{ data: any; timestamp: number }
 >();
 
-// src/lib/utils/dateUtils.ts
-export function getValidBCBDate(yearsAgo: number): string {
-	const date = new Date();
+/**
+ * Adaptação da função existente em utils.ts para formato BCB (dd-mm-yyyy)
+ */
+export function formatBCBDate(date: Date): string {
+	return getValidBCBDate(0, date); // Reaproveita a função existente
+}
+
+export function getValidBCBDate(
+	yearsAgo: number,
+	baseDate?: Date,
+): string {
+	const date = baseDate ? new Date(baseDate) : new Date();
 	date.setFullYear(date.getFullYear() - yearsAgo);
 
-	// Formato exigido pela API: DD/MM/YYYY
 	const day = String(date.getDate()).padStart(2, '0');
 	const month = String(date.getMonth() + 1).padStart(2, '0');
 	const year = date.getFullYear();
 
-	return `${day}/${month}/${year}`;
+	return `${day}-${month}-${year}`; // Mantido o formato com hífen
 }
 
 // src/lib/utils/dateUtils.ts (novo arquivo)
@@ -62,6 +70,12 @@ export function ensureIndexValue(
 	}
 
 	return fallback;
+}
+
+export function calculateAverageRate(quotes: number[]): number {
+	if (quotes.length === 0) return 0;
+	const sum = quotes.reduce((acc, quote) => acc + quote, 0);
+	return parseNumber((sum / quotes.length).toString());
 }
 
 export class EconomicIndicesLogger {

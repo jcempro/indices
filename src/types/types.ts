@@ -2,6 +2,7 @@ export interface IndexValue {
 	current: number;
 	avg?: number;
 	updated: Date;
+	src?: string[];
 }
 
 export type EconomicIndices = Record<PropertyKey, IndexValue>;

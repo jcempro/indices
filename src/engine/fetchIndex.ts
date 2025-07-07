@@ -56,9 +56,10 @@ export async function fetchIndex<T = any>(
 
 		// 2. Busca dados históricos (se configurado)
 		let historicalValues: number[] = [];
+		let historicalUrl: string | undefined;
 		if (hCfg) {
 			try {
-				const historicalUrl = hCfg.urlBuilder(url);
+				historicalUrl = hCfg.urlBuilder(url);
 				historicalValues = await fetchWithRetry(
 					historicalUrl,
 					async (response) => {
@@ -75,8 +76,13 @@ export async function fetchIndex<T = any>(
 			}
 		}
 
-		// 3. Formata a resposta
-		return formatIndexValue(currentData, historicalValues);
+		// 3. Formata a resposta com as URLs de origem
+		const result = formatIndexValue(currentData, historicalValues);
+		result.src = [url];
+		if (historicalUrl) {
+			result.src.push(historicalUrl);
+		}
+		return result;
 	} catch (error) {
 		logger.error(`Failed to fetch ${iname} data:`, error);
 		return fb ?? createfbIndex();
