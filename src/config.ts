@@ -4,6 +4,7 @@ import { fetchIPCA } from './indices/ipca.js';
 import { fetchSelic } from './indices/selic.js';
 import { fetchs } from './types/types.js';
 import { FetchOptions } from './engine/utils.js';
+import { fetchDolar } from './indices/dolar.js';
 
 export const CACHE_TTL = 30 * 60 * 1000; // 5 minutos em milissegundos
 
@@ -18,4 +19,5 @@ export const SOURCES: Record<PropertyKey, fetchs> = {
 	CDI: fetchCDI,
 	ipca: fetchIPCA,
 	inpc: fetchINPC,
+	dolar: fetchDolar,
 };
