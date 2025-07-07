@@ -1,14 +1,9 @@
 import { EconomicIndices, StoredIndices } from '../types/types.js';
+import { isNodeEnvironment } from './utils.js';
 
 const STORAGE_KEY = 'economic_indices_data';
 
 // Helper para detectar ambiente Node.js
-function isNodeEnvironment(): boolean {
-	return (
-		typeof process !== 'undefined' &&
-		process.versions?.node !== undefined
-	);
-}
 
 // Helper para carregar módulos do Node.js dinamicamente
 async function loadNodeModules() {
@@ -76,6 +71,7 @@ export async function saveToStorage(
 		// Node.js
 		else if (isNodeEnvironment()) {
 			const { fs, path } = await loadNodeModules();
+			console.log(process.cwd());
 			const filePath = path.join(process.cwd(), 'indices.json');
 			await fs.writeFile(
 				filePath,

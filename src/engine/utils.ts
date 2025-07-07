@@ -7,6 +7,13 @@ export interface FetchOptions {
 	timeout?: number;
 }
 
+export function isNodeEnvironment(): boolean {
+	return (
+		typeof process !== 'undefined' &&
+		process.versions?.node !== undefined
+	);
+}
+
 const responseCache = new Map<
 	string,
 	{ data: any; timestamp: number }
