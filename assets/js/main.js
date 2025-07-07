@@ -12,16 +12,17 @@
 	// Adiciona um parâmetro de cache busting para desenvolvimento
 	const cacheBuster =
 		isLocal ?
-			`?t=${Date.now()}`
+			`${Date.now()}`
 		:	[
 				now.getFullYear(),
 				String(now.getMonth() + 1).padStart(2, '0'),
 				String(now.getDate()).padStart(2, '0'),
+				String(now.getHours()).padStart(2, '0'),
 			].join('');
 	script.src =
 		isLocal ?
-			'./src/run.ts' + cacheBuster
-		:	'./dist/run.js' + cacheBuster;
+			'./src/run.ts?t=' + cacheBuster
+		:	'./dist/run.js?t=' + cacheBuster;
 
 	script.onload = initApp;
 	script.onerror = () => {
