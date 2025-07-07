@@ -34,3 +34,4 @@ jobs:
           git add dist/indices.json          
           git commit -m "Atualização índices em $(date -d '-3 hours' '+%d/%m/%Y %H:%M')" || echo "Sem alterações"
           git push
+          git push origin main
