@@ -10,6 +10,7 @@ import {
 	WorkerCommand,
 } from '../types/types.js';
 import workerScript from './worker-string.js';
+import { isNodeEnvironment } from './utils.js';
 
 class EconomicIndicesClient {
 	private worker: Worker | null = null;
@@ -20,9 +21,7 @@ class EconomicIndicesClient {
 	private readonly isNode: boolean;
 
 	constructor() {
-		this.isNode =
-			typeof process !== 'undefined' &&
-			process.versions?.node !== undefined;
+		this.isNode = isNodeEnvironment();
 		this.initialize().catch(console.error);
 	}
 
