@@ -12,7 +12,7 @@ import {
 import workerScript from './worker-string.js';
 import { isNodeEnvironment } from './utils.js';
 
-class EconomicIndicesClient {
+export class EconomicIndicesClient {
 	private worker: Worker | null = null;
 	private currentIndices: EconomicIndices | null = null;
 	private pendingResolvers: Array<
