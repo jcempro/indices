@@ -76,6 +76,7 @@
 		const indicesContainer = document.getElementById('indices');
 		const refreshBtn = document.getElementById('refresh');
 		const checkStorageBtn = document.getElementById('checkStorage');
+		const clearStorageBtn = document.getElementById('clearStorage');
 
 		async function loadIndices() {
 			try {
@@ -122,6 +123,10 @@
 			);
 			console.log('Conteúdo do Storage:', stored);
 			alert('Verifique o console para ver o conteúdo do storage');
+		});
+
+		clearStorageBtn.addEventListener('click', () => {
+			window.clearIndices();
 		});
 
 		await loadIndices();
