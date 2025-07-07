@@ -22,8 +22,8 @@
 		);
 	script.src =
 		isLocal ?
-			'./src/run.ts?t=' + cacheBuster
-		:	'./dist/run.js?t=' + cacheBuster;
+			'src/run.ts?t=' + cacheBuster
+		:	'dist/run.js?t=' + cacheBuster;
 
 	script.onload = initApp;
 	script.onerror = () => {
