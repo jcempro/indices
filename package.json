@@ -21,6 +21,7 @@
 		"@types/node": "^20.19.4",
 		"@types/web": "^0.0.245",
 		"esbuild": "^0.25.5",
+		"gzip-size": "^7.0.0",
 		"path": "^0.12.7",
 		"preact": "^10.26.7",
 		"prettier": "^3.5.3",
