@@ -25,7 +25,7 @@ jobs:
       - name: Move indices.json to dist
         run: |
           if [ -f indices.json ]; then
-            mv indices.json ./dist/
+            mv -f indices.json ./dist/
           fi
 
       - name: Commit and Push
