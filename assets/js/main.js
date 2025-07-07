@@ -10,15 +10,16 @@
 	script.type = 'module';
 
 	// Adiciona um parâmetro de cache busting para desenvolvimento
+	const now = Date.now();
 	const cacheBuster =
-		isLocal ?
-			`${Date.now()}`
-		:	[
+		isLocal ? now : (
+			[
 				now.getFullYear(),
 				String(now.getMonth() + 1).padStart(2, '0'),
 				String(now.getDate()).padStart(2, '0'),
 				String(now.getHours()).padStart(2, '0'),
-			].join('');
+			].join('')
+		);
 	script.src =
 		isLocal ?
 			'./src/run.ts?t=' + cacheBuster
