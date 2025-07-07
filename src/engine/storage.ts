@@ -87,7 +87,7 @@ export async function saveToStorage(
 export function deveriaAtualizar(
 	storedData: StoredIndices | null,
 ): boolean {
-	if (!storedData) return true;
+	if (!storedData || isNodeEnvironment()) return true;
 
 	const lastUpdated = new Date(storedData.updated);
 	const today = new Date();
@@ -99,7 +99,6 @@ export function deveriaAtualizar(
 	);
 }
 
-// NOVA FUNÇÃO ADICIONADA (única alteração significativa)
 export async function clearStorage(): Promise<void> {
 	try {
 		if (typeof window !== 'undefined' && window.localStorage) {
