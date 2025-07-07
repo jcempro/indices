@@ -22,13 +22,14 @@ const responseCache = new Map<
 /**
  * Adaptação da função existente em utils.ts para formato BCB (dd-mm-yyyy)
  */
-export function formatBCBDate(date: Date): string {
-	return getValidBCBDate(0, date); // Reaproveita a função existente
+export function formatBCBDate(date: Date, sep: string = `-`): string {
+	return getValidBCBDate(0, date, sep); // Reaproveita a função existente
 }
 
 export function getValidBCBDate(
 	yearsAgo: number,
 	baseDate?: Date,
+	sep: string = `-`,
 ): string {
 	const date = baseDate ? new Date(baseDate) : new Date();
 	date.setFullYear(date.getFullYear() - yearsAgo);
@@ -37,7 +38,7 @@ export function getValidBCBDate(
 	const month = String(date.getMonth() + 1).padStart(2, '0');
 	const year = date.getFullYear();
 
-	return `${day}-${month}-${year}`; // Mantido o formato com hífen
+	return `${day}${sep}${month}${sep}${year}`; // Mantido o formato com hífen
 }
 
 // src/lib/utils/dateUtils.ts (novo arquivo)
