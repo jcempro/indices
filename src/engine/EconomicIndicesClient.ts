@@ -1,6 +1,6 @@
 import { SOURCES } from '../config.js';
 import {
-	deveriaAtualizar,
+	deveAtualizar,
 	loadFromStorage,
 	saveToStorage,
 } from './storage.js';
@@ -12,7 +12,7 @@ import {
 import workerScript from './worker-string.js';
 import { isNodeEnvironment } from './utils.js';
 
-export { loadFromStorage, deveriaAtualizar };
+export { loadFromStorage, deveAtualizar };
 
 export class EconomicIndicesClient {
 	private worker: Worker | null = null;
@@ -81,7 +81,7 @@ export class EconomicIndicesClient {
 	public async getIndices(): Promise<EconomicIndices | null> {
 		const stored = await loadFromStorage();
 
-		if (stored && !deveriaAtualizar(stored)) {
+		if (stored && !deveAtualizar(stored)) {
 			return stored.indices; // Retorna apenas a parte EconomicIndices
 		}
 

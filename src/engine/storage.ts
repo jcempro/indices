@@ -413,7 +413,7 @@ function _getLatestUpdatedDate(data: EconomicIndices): Date {
 export {
 	loadFromStorage,
 	saveToStorage,
-	deveAtualizar as deveriaAtualizar,
+	deveAtualizar,
 	clearStorage,
 	formatDateAsNumber,
 	parseNumberAsDate,
