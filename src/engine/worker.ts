@@ -1,5 +1,8 @@
-import { ECONIDX } from './EconomicIndicesClient.js';
-import { loadFromStorage, deveriaAtualizar } from './storage.js';
+import {
+	ECONIDX,
+	loadFromStorage,
+	deveriaAtualizar,
+} from './EconomicIndicesClient.js';
 import { WorkerCommand, WorkerMessage } from '../types/types.js';
 
 // Definindo a tipagem completa para o contexto do Worker

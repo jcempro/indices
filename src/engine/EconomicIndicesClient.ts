@@ -12,6 +12,8 @@ import {
 import workerScript from './worker-string.js';
 import { isNodeEnvironment } from './utils.js';
 
+export { loadFromStorage, deveriaAtualizar };
+
 export class EconomicIndicesClient {
 	private worker: Worker | null = null;
 	private currentIndices: EconomicIndices | null = null;
