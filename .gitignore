@@ -7,3 +7,5 @@ logs
 
 node_modules
 stats.html
+
+__tmp__*
