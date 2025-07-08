@@ -6,6 +6,7 @@ import {
 	clearStorage,
 	deveriaAtualizar,
 	loadFromStorage,
+	saveToStorage,
 } from './engine/storage.js';
 import { isNodeEnvironment } from './engine/utils.js';
 
@@ -14,6 +15,8 @@ export {
 	ECONIDX,
 	deveriaAtualizar,
 	loadFromStorage,
+	clearStorage,
+	saveToStorage,
 };
 
 if (typeof window !== 'undefined') {
