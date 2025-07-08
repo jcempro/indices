@@ -1,7 +1,7 @@
 export interface IndexValue {
 	current: number;
 	avg?: number;
-	updated: Date;
+	updated: Date | number;
 	src?: string[];
 }
 
@@ -19,7 +19,8 @@ export type WorkerCommand = {
 
 export interface StoredIndices {
 	indices: EconomicIndices;
-	updated: string;
+	updated: Date | number;
+	alias?: Record<PropertyKey, string | number>;
 }
 
 export type fetchs = (fallback?: IndexValue) => Promise<IndexValue>;
